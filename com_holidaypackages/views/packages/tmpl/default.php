@@ -5,11 +5,18 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 
+// Load required assets
 HTMLHelper::_('bootstrap.loadCss');
 HTMLHelper::_('jquery.framework');
+HTMLHelper::_('behavior.keepalive');
+
+// Load custom CSS and JS
 $document = Factory::getDocument();
-$document->addStyleSheet(Uri::root() . 'media/com_holidaypackages/css/packages.css');
+$document->addStyleSheet(Uri::root() . 'components/com_holidaypackages/css/packages.css');
+$document->addStyleSheet('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+$document->addStyleSheet('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
 
 $app = Factory::getApplication();
 $input = $app->input;
@@ -21,7 +28,10 @@ if (!$destinationId) {
         $destinationId = (int)$_GET['id']; 
     }
 }
-echo '<script>console.log("Initial destinationId from PHP:", ' . json_encode($destinationId) . ');</script>'; // Debug log
+// Debug logging (can be removed in production)
+if (JDEBUG) {
+    echo '<script>console.log("Initial destinationId from PHP:", ' . json_encode($destinationId) . ');</script>';
+}
 $startingFrom = $input->getString('starting_from', '');
 $startDate = $input->getString('start_date', '');
 $rooms = $input->getInt('rooms', 1);
@@ -84,9 +94,10 @@ try {
         }
     }
 
+    // Ensure filter options and package counts are available
     $filterOptions = $this->filterOptions ?? (object)[
         'durations' => [],
-        'flights' => [],
+        'flights' => ['with' => 0, 'without' => 0],
         'hotelCategories' => [],
         'cities' => [],
         'packageTypes' => []
@@ -196,7 +207,9 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
 
 ?>
 
-
+<!-- Main Package Layout Container -->
+<div class="container">
+    <!-- Search Section -->
     <div class="search-section" id="search-section">
         <div class="form-group">
             <button class="custom-button" id="starting-from"><?php echo htmlspecialchars($startingFrom ?: 'Select City', ENT_QUOTES, 'UTF-8'); ?></button>
@@ -295,22 +308,37 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
         </div>
     </div>
 </div> 
-        <button type="button" class="btn" id="search-btn">Search</button>
-        <button type="button" class="btn explore-btn" id="explore-btn">CLEAR</button>
+        <div class="search-buttons">
+            <button type="button" class="btn" id="search-btn">
+                <i class="fas fa-search"></i> Search
+            </button>
+            <button type="button" class="btn explore-btn" id="explore-btn">
+                <i class="fas fa-eraser"></i> CLEAR
+            </button>
+        </div>
     </div>
-<div class="hero-image-container">
-    <img src="<?php echo htmlspecialchars($fullImageUrl, ENT_QUOTES, 'UTF-8'); ?>"
-         alt="Destination Image"
-         onerror="this.onerror=null;this.src='http://localhost/tourism_joomla/images/carousel-2.jpg';"
-         class="hero-image">
+    <!-- Hero Image Section -->
+    <div class="hero-image-container">
+        <?php if (!empty($fullImageUrl)): ?>
+            <img src="<?php echo htmlspecialchars($fullImageUrl, ENT_QUOTES, 'UTF-8'); ?>"
+                 alt="<?php echo htmlspecialchars($destinationTitle ?: 'Destination Image', ENT_QUOTES, 'UTF-8'); ?>"
+                 class="hero-image"
+                 onerror="this.style.display='none';">
+        <?php else: ?>
+            <div class="hero-placeholder">
+                <i class="fas fa-map-marked-alt fa-3x"></i>
+                <h3><?php echo Text::_('COM_HOLIDAYPACKAGES_NO_IMAGE_AVAILABLE'); ?></h3>
+            </div>
+        <?php endif; ?>
 
-    <div class="hero-image-title">
-        <?php echo !empty($destinationTitle) ? htmlspecialchars($destinationTitle, ENT_QUOTES, 'UTF-8') : 'Popular Packages'; ?>
+        <div class="hero-image-title">
+            <?php echo !empty($destinationTitle) ? htmlspecialchars($destinationTitle, ENT_QUOTES, 'UTF-8') : Text::_('COM_HOLIDAYPACKAGES_POPULAR_PACKAGES'); ?>
+        </div>
     </div>
-</div>
 
-<div class="package-wrapper">
-    <!-- Selected Filters Display -->
+    <!-- Package Wrapper -->
+    <div class="package-wrapper">
+        <!-- Selected Filters Display -->
     <div class="selected-filters-wrapper" id="selected-filters-display" style="<?php echo $selectedFiltersPresent ? 'display: flex;' : 'display: none;'; ?>">
         <?php
         $actualSelectedFiltersCount = 0;
@@ -344,19 +372,23 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
         }
         if ($actualSelectedFiltersCount > 0):
         ?>
-            <span class="clear-all-filters" id="clear-all-filters">Clear All</span>
+            <span class="clear-all-filters" id="clear-all-filters">
+                <i class="fas fa-times"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_CLEAR_ALL'); ?>
+            </span>
         <?php endif; ?>
     </div>
 
-    <div class="clearfix">
-        <!-- Filter Section -->
-        
-            <h5>FILTERS</h5>
-<div class="filter-section">
-            <!-- Duration Filter -->
-            <div class="filter-card">
-                <div class="form-group">
-                    <label for="duration-range-slider">Duration (in Nights)</label>
+        <!-- Main Content Layout -->
+        <div class="clearfix">
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h5><i class="fas fa-filter"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_FILTERS'); ?></h5>
+                <!-- Duration Filter -->
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label for="duration-range-slider">
+                            <i class="fas fa-calendar-alt"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_DURATION_NIGHTS'); ?>
+                        </label>
                     <div class="range-wrapper">
                         <input type="range" id="duration-range-slider" 
                                min="<?php echo (int)$minDuration; ?>" 
@@ -366,29 +398,40 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                             1-<?php echo $currentDurationValue > $maxDuration ? (int)$maxDuration : (int)$currentDurationValue; ?>N
                         </span>
                     </div>
-                </div>
-            </div>
-
-            <!-- Flights Filter -->
-            <div class="filter-card">
-                <div class="form-group">
-                    <label>Flights</label>
-                    <div class="checkbox-group">
-                        <div class="checkbox">
-                            <input type="checkbox" id="with-flight" name="flights" value="with" <?php echo ($currentFilters['flights'] === 'with') ? 'checked' : ''; ?>>
-                            <label for="with-flight">With Flight (<?php echo (int)($filterOptions->flights['with'] ?? 0); ?>)</label>
-                        </div>
-                        <div class="checkbox">
-                            <input type="checkbox" id="without-flight" name="flights" value="without" <?php echo ($currentFilters['flights'] === 'without') ? 'checked' : ''; ?>>
-                            <label for="without-flight">Without Flight (<?php echo (int)($filterOptions->flights['without'] ?? 0); ?>)</label>
-                        </div>
                     </div>
                 </div>
-            </div>
 
-<div class="filter-card">
-    <div class="form-group budget-filter">
-        <label>Budget (per person)</label>
+                <!-- Flights Filter -->
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label><i class="fas fa-plane"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_FLIGHTS'); ?></label>
+                    <div class="checkbox-group">
+                        <div class="checkbox">
+                            <input type="checkbox" id="with-flight" name="flights" value="with" 
+                                   <?php echo ($currentFilters['flights'] === 'with') ? 'checked' : ''; ?>
+                                   data-filter="flights">
+                            <label for="with-flight">
+                                <?php echo Text::_('COM_HOLIDAYPACKAGES_WITH_FLIGHT'); ?> 
+                                (<?php echo (int)($filterOptions->flights['with'] ?? 0); ?>)
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <input type="checkbox" id="without-flight" name="flights" value="without" 
+                                   <?php echo ($currentFilters['flights'] === 'without') ? 'checked' : ''; ?>
+                                   data-filter="flights">
+                            <label for="without-flight">
+                                <?php echo Text::_('COM_HOLIDAYPACKAGES_WITHOUT_FLIGHT'); ?> 
+                                (<?php echo (int)($filterOptions->flights['without'] ?? 0); ?>)
+                            </label>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Budget Filter -->
+                <div class="filter-card">
+                    <div class="form-group budget-filter">
+                        <label><i class="fas fa-rupee-sign"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_BUDGET_PER_PERSON'); ?></label>
         <div class="range-wrapper dual-range">
             <div class="slider-track"></div>
             <input type="range" id="min-price-slider" name="min_price" min="<?php echo (int)$minPrice; ?>" max="<?php echo (int)$maxPrice; ?>" value="<?php echo (int)$currentFilters['min_price']; ?>">
@@ -398,13 +441,14 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
             <span id="min-price-display">₹<?php echo number_format($currentFilters['min_price']); ?></span>
             <span>-</span>
             <span id="max-price-display">₹<?php echo number_format($currentFilters['max_price']); ?></span>
-        </div>
-    </div>
-</div>
-            <!-- Hotel Category Filter -->
-            <div class="filter-card">
-                <div class="form-group">
-                    <label>Hotel Category</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hotel Category Filter -->
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label><i class="fas fa-hotel"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_HOTEL_CATEGORY'); ?></label>
                     <div class="checkbox-group">
                         <?php
                         $hotelCategories = $filterOptions->hotelCategories ?? [];
@@ -426,16 +470,19 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                         </div>
                         <?php endforeach; ?>
                         <?php else: ?>
-                            <p>No hotel categories available for this destination.</p>
+                            <p class="no-options-message">
+                                <i class="fas fa-info-circle"></i> 
+                                <?php echo Text::_('COM_HOLIDAYPACKAGES_NO_HOTEL_CATEGORIES'); ?>
+                            </p>
                         <?php endif; ?>
                     </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Cities Filter -->
-            <div class="filter-card">
-                <div class="form-group">
-                    <label>Cities</label>
+                <!-- Cities Filter -->
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label><i class="fas fa-city"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_CITIES'); ?></label>
                     <div class="checkbox-group cities">
                         <?php if (!empty($filterOptions->cities)): ?>
                             <?php foreach ($filterOptions->cities as $city): ?>
@@ -450,16 +497,19 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <p>No cities available for this destination.</p>
+                            <p class="no-options-message">
+                                <i class="fas fa-info-circle"></i> 
+                                <?php echo Text::_('COM_HOLIDAYPACKAGES_NO_CITIES_AVAILABLE'); ?>
+                            </p>
                         <?php endif; ?>
                     </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Package Type Filter -->
-            <div class="filter-card">
-                <div class="form-group">
-                    <label>Package Type</label>
+                <!-- Package Type Filter -->
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label><i class="fas fa-tags"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_PACKAGE_TYPE'); ?></label>
                     <div class="checkbox-group">
                         <?php if (!empty($filterOptions->packageTypes)): ?>
                             <?php foreach ($filterOptions->packageTypes as $type => $count): ?>
@@ -474,24 +524,27 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <p>No package types available for this destination.</p>
+                            <p class="no-options-message">
+                                <i class="fas fa-info-circle"></i> 
+                                <?php echo Text::_('COM_HOLIDAYPACKAGES_NO_PACKAGE_TYPES'); ?>
+                            </p>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Package Content -->
-        <div class="package-content-wrapper">
-            <!-- Tabs Section -->
-            <div class="tabs-section" id="tabs-section">
-                <ul class="nav nav-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo ($currentFilters['tab_filter'] === 'all') ? 'active' : ''; ?>" 
-                           href="#" data-tab-filter="all">
-                            All Packages <span class="badge"><?php echo (int)($packageCounts->all_packages ?? 0); ?></span>
-                        </a>
-                    </li>
+            <!-- Package Content -->
+            <div class="package-content-wrapper">
+                <!-- Tabs Section -->
+                <div class="tabs-section" id="tabs-section">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo ($currentFilters['tab_filter'] === 'all') ? 'active' : ''; ?>" 
+                               href="#" data-tab-filter="all" role="tab" aria-selected="<?php echo ($currentFilters['tab_filter'] === 'all') ? 'true' : 'false'; ?>">
+                                <i class="fas fa-th-large"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_ALL_PACKAGES'); ?>
+                                <span class="badge"><?php echo (int)($packageCounts->all_packages ?? 0); ?></span>
+                            </a>
+                        </li>
                     <?php
                     $shownPackages = [];
                     foreach ($specialPackages as $package) {
@@ -507,11 +560,16 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                             $db->setQuery($query);
                             $count = $db->loadResult();
                             if ($count > 0) {
+                                $isActive = ($currentFilters['tab_filter'] === $tabFilter);
                     ?>
                                 <li class="nav-item">
-                                    <a class="nav-link <?php echo ($currentFilters['tab_filter'] === $tabFilter) ? 'active' : ''; ?>"
-                                       href="#" data-tab-filter="<?php echo htmlspecialchars($tabFilter, ENT_QUOTES, 'UTF-8'); ?>">
-                                        <?php echo htmlspecialchars($package, ENT_QUOTES, 'UTF-8'); ?> <span class="badge"><?php echo (int)$count; ?></span>
+                                    <a class="nav-link <?php echo $isActive ? 'active' : ''; ?>"
+                                       href="#" 
+                                       data-tab-filter="<?php echo htmlspecialchars($tabFilter, ENT_QUOTES, 'UTF-8'); ?>"
+                                       role="tab" 
+                                       aria-selected="<?php echo $isActive ? 'true' : 'false'; ?>">
+                                        <i class="fas fa-star"></i> <?php echo htmlspecialchars($package, ENT_QUOTES, 'UTF-8'); ?>
+                                        <span class="badge"><?php echo (int)$count; ?></span>
                                     </a>
                                 </li>
                     <?php
@@ -519,96 +577,141 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                         }
                     }
                     ?>
-                </ul>
-            </div>
-
-            <!-- Sort By -->
-            <div class="sort-by-container">
-                <label for="sort-by-select">Sorted By:</label>
-                <select id="sort-by-select">
-                    <option value="popular" <?php echo ($currentFilters['sort'] === 'popular') ? 'selected' : ''; ?>>Popular</option>
-                    <option value="price_low_high" <?php echo ($currentFilters['sort'] === 'price_low_high') ? 'selected' : ''; ?>>Price - Low to High</option>
-                    <option value="price_high_low" <?php echo ($currentFilters['sort'] === 'price_high_low') ? 'selected' : ''; ?>>Price - High to Low</option>
-                    <option value="duration_low_high" <?php echo ($currentFilters['sort'] === 'duration_low_high') ? 'selected' : ''; ?>>Duration - Low to High</option>
-                    <option value="duration_high_low" <?php echo ($currentFilters['sort'] === 'duration_high_low') ? 'selected' : ''; ?>>Duration - High to Low</option>
-                </select>
-            </div>
-
-            <!-- Package Cards -->
-            <?php if (empty($this->items)): ?>
-                <div class="no-packages-message">
-                    Packages not available for the selected criteria. Please try adjusting your filters or selecting another destination.
+                    </ul>
                 </div>
-            <?php else: ?>
-                <div class="row">
-                    <?php foreach ($this->items as $item): ?>
-                        <?php
-                        // Process features using the model
-                        $features = $model->processSectionTypes($item->section_types ?? '', $item);
-                        $features = array_values(array_unique(array_filter(array_map('trim', $features))));
 
-                        // Extract special package details for this item
-                        $itemSpecialPackages = [];
-                        $decoded = json_decode($item->special_package ?? '', true);
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            foreach ($decoded as $key => $value) {
-                                if (isset($value['special_package']['detail'])) {
-                                    $itemSpecialPackages[] = $value['special_package']['detail'];
+                <!-- Sort By -->
+                <div class="sort-by-container">
+                    <label for="sort-by-select">
+                        <i class="fas fa-sort-amount-down"></i> <?php echo Text::_('COM_HOLIDAYPACKAGES_SORTED_BY'); ?>:
+                    </label>
+                    <select id="sort-by-select" aria-label="<?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_PACKAGES'); ?>">
+                        <option value="popular" <?php echo ($currentFilters['sort'] === 'popular') ? 'selected' : ''; ?>>
+                            <?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_POPULAR'); ?>
+                        </option>
+                        <option value="price_low_high" <?php echo ($currentFilters['sort'] === 'price_low_high') ? 'selected' : ''; ?>>
+                            <?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_PRICE_LOW_HIGH'); ?>
+                        </option>
+                        <option value="price_high_low" <?php echo ($currentFilters['sort'] === 'price_high_low') ? 'selected' : ''; ?>>
+                            <?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_PRICE_HIGH_LOW'); ?>
+                        </option>
+                        <option value="duration_low_high" <?php echo ($currentFilters['sort'] === 'duration_low_high') ? 'selected' : ''; ?>>
+                            <?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_DURATION_LOW_HIGH'); ?>
+                        </option>
+                        <option value="duration_high_low" <?php echo ($currentFilters['sort'] === 'duration_high_low') ? 'selected' : ''; ?>>
+                            <?php echo Text::_('COM_HOLIDAYPACKAGES_SORT_DURATION_HIGH_LOW'); ?>
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Package Cards -->
+                <?php if (empty($this->items)): ?>
+                    <div class="no-packages-message">
+                        <i class="fas fa-search fa-3x"></i>
+                        <h3><?php echo Text::_('COM_HOLIDAYPACKAGES_NO_PACKAGES_FOUND'); ?></h3>
+                        <p><?php echo Text::_('COM_HOLIDAYPACKAGES_NO_PACKAGES_MESSAGE'); ?></p>
+                    </div>
+                <?php else: ?>
+                    <div class="row">
+                        <?php foreach ($this->items as $item): ?>
+                            <?php
+                            // Process features using the model
+                            $features = $model->processSectionTypes($item->section_types ?? '', $item);
+                            $features = array_values(array_unique(array_filter(array_map('trim', $features))));
+
+                            // Extract special package details for this item
+                            $itemSpecialPackages = [];
+                            $decoded = json_decode($item->special_package ?? '', true);
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                foreach ($decoded as $key => $value) {
+                                    if (isset($value['special_package']['detail'])) {
+                                        $itemSpecialPackages[] = $value['special_package']['detail'];
+                                    }
                                 }
                             }
-                        }
 
-                        // Check if this item matches the selected tab filter
-                        $showItem = ($currentFilters['tab_filter'] === 'all');
-                        if (!$showItem && !empty($currentFilters['tab_filter'])) {
-                            $tabFilterName = str_replace('_', ' ', $currentFilters['tab_filter']);
-                            $showItem = in_array($tabFilterName, $itemSpecialPackages);
-                        }
-
-                        if ($showItem) {
-                            $query = $db->getQuery(true)
-                                ->select($db->quoteName(['place_name']))
-                                ->from($db->quoteName('n4gvg__holiday_itineraries'))
-                                ->where($db->quoteName('package_id') . ' = ' . (int)$item->id)
-                                ->order('day_number ASC');
-                            $db->setQuery($query);
-                            $itineraries = $db->loadColumn();
-                            $placeNights = array_count_values($itineraries);
-                            $placeNightsString = '';
-                            foreach ($placeNights as $place => $nights) {
-                                if ($placeNightsString) $placeNightsString .= ' • ';
-                                $placeNightsString .= $nights . 'N ' . htmlspecialchars($place, ENT_QUOTES, 'UTF-8');
+                            // Check if this item matches the selected tab filter
+                            $showItem = ($currentFilters['tab_filter'] === 'all');
+                            if (!$showItem && !empty($currentFilters['tab_filter'])) {
+                                $tabFilterName = str_replace('_', ' ', $currentFilters['tab_filter']);
+                                $showItem = in_array($tabFilterName, $itemSpecialPackages);
                             }
-                            $days = isset($packageND[$item->id]) ? $packageND[$item->id][1] : (int)$item->duration;
-                            $nights = isset($packageND[$item->id]) ? $packageND[$item->id][0] : ($days > 0 ? $days - 1 : 0);
-                        ?>
-                            <div class="col-md-6 col-sm-12">
-                                <div class="package-card">
-                                    <a href="<?php echo Route::_('index.php?option=com_holidaypackages&view=details&id=' . (int)$item->id); ?>">
-                                        <img src="<?php echo Uri::root() . htmlspecialchars($item->image ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                             onerror="this.onerror=null;this.src='https://placehold.co/400x220/E0E0E0/333333?text=No+Image';"
-                                             alt="<?php echo htmlspecialchars($item->title ?? 'Package Image', ENT_QUOTES, 'UTF-8'); ?>">
-                                    </a>
-                                   
-                                    <div class="package-content">
-                                        <div class="header-content">
-                                            <div>
-                                                <h4><?php echo htmlspecialchars($item->title ?? 'Package Title', ENT_QUOTES, 'UTF-8'); ?></h4>
-                                                <div class="destination-breakdown">
-                                                    <?php echo htmlspecialchars($placeNightsString ?: 'No itinerary available', ENT_QUOTES, 'UTF-8'); ?>
+
+                            if ($showItem) {
+                                // Get itinerary information
+                                $query = $db->getQuery(true)
+                                    ->select($db->quoteName(['place_name']))
+                                    ->from($db->quoteName('n4gvg__holiday_itineraries'))
+                                    ->where($db->quoteName('package_id') . ' = ' . (int)$item->id)
+                                    ->order('day_number ASC');
+                                $db->setQuery($query);
+                                $itineraries = $db->loadColumn();
+                                $placeNights = array_count_values($itineraries);
+                                $placeNightsString = '';
+                                foreach ($placeNights as $place => $nights) {
+                                    if ($placeNightsString) $placeNightsString .= ' • ';
+                                    $placeNightsString .= $nights . 'N ' . htmlspecialchars($place, ENT_QUOTES, 'UTF-8');
+                                }
+                                $days = isset($packageND[$item->id]) ? $packageND[$item->id][1] : (int)$item->duration;
+                                $nights = isset($packageND[$item->id]) ? $packageND[$item->id][0] : ($days > 0 ? $days - 1 : 0);
+                            ?>
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="package-card" itemscope itemtype="https://schema.org/TravelPackage">
+                                        <div class="package-image-container">
+                                            <a href="<?php echo Route::_('index.php?option=com_holidaypackages&view=details&id=' . (int)$item->id); ?>" 
+                                               aria-label="<?php echo Text::sprintf('COM_HOLIDAYPACKAGES_VIEW_PACKAGE_DETAILS', htmlspecialchars($item->title ?? '', ENT_QUOTES, 'UTF-8')); ?>">
+                                                <?php if (!empty($item->image)): ?>
+                                                    <img src="<?php echo Uri::root() . htmlspecialchars($item->image, ENT_QUOTES, 'UTF-8'); ?>"
+                                                         alt="<?php echo htmlspecialchars($item->title ?? 'Package Image', ENT_QUOTES, 'UTF-8'); ?>"
+                                                         loading="lazy"
+                                                         onerror="this.onerror=null;this.src='https://placehold.co/400x220/E0E0E0/333333?text=No+Image';">
+                                                <?php else: ?>
+                                                    <div class="no-image-placeholder">
+                                                        <i class="fas fa-image fa-2x"></i>
+                                                        <span><?php echo Text::_('COM_HOLIDAYPACKAGES_NO_IMAGE'); ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </a>
+                                        </div>
+
+                                        <div class="package-content">
+                                            <div class="header-content">
+                                                <div class="package-info">
+                                                    <h4 itemprop="name">
+                                                        <a href="<?php echo Route::_('index.php?option=com_holidaypackages&view=details&id=' . (int)$item->id); ?>" 
+                                                           class="package-title-link">
+                                                            <?php echo htmlspecialchars($item->title ?? Text::_('COM_HOLIDAYPACKAGES_PACKAGE_TITLE'), ENT_QUOTES, 'UTF-8'); ?>
+                                                        </a>
+                                                    </h4>
+                                                    <div class="destination-breakdown" itemprop="description">
+                                                        <?php if (!empty($placeNightsString)): ?>
+                                                            <i class="fas fa-map-marker-alt"></i>
+                                                            <?php echo htmlspecialchars($placeNightsString, ENT_QUOTES, 'UTF-8'); ?>
+                                                        <?php else: ?>
+                                                            <i class="fas fa-info-circle"></i>
+                                                            <?php echo Text::_('COM_HOLIDAYPACKAGES_NO_ITINERARY'); ?>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="duration-tag" itemprop="duration">
+                                                    <i class="fas fa-clock"></i>
+                                                    <?php echo (int)$nights; ?>N/<?php echo (int)$days; ?>D
                                                 </div>
                                             </div>
-                                            <div class="duration-tag"><?php echo (int)$nights; ?>N/<?php echo (int)$days; ?>D</div>
-                                        </div>
-                                        <ul class="package-features">
-                                            <?php if (!empty($features)): ?>
-                                                <?php foreach ($features as $feature): ?>
-                                                    <li><?php echo htmlspecialchars($feature, ENT_QUOTES, 'UTF-8'); ?></li>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <li>No package details found</li>
-                                            <?php endif; ?>
-                                        </ul>
+                                            <ul class="package-features" itemprop="amenityFeature">
+                                                <?php if (!empty($features)): ?>
+                                                    <?php foreach (array_slice($features, 0, 6) as $feature): // Limit to 6 features ?>
+                                                        <li itemscope itemtype="https://schema.org/LocationFeatureSpecification">
+                                                            <span itemprop="name"><?php echo htmlspecialchars($feature, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <li class="no-features">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        <?php echo Text::_('COM_HOLIDAYPACKAGES_NO_PACKAGE_DETAILS'); ?>
+                                                    </li>
+                                                <?php endif; ?>
+                                            </ul>
                                         <?php
                                         $query = $db->getQuery(true)
                                             ->select($db->quoteName('all_sections'))
@@ -651,51 +754,66 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
                                                 </ul>
                                             </div>
                                         <?php endif; ?>
-                                        <div class="package-price-info">
-                                            <span class="discount-text">This price is lower than the average price in month</span>
-                                            <div class="price-container">
+                                            <div class="package-price-info" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+                                                <span class="discount-text">
+                                                    <i class="fas fa-percentage"></i>
+                                                    <?php echo Text::_('COM_HOLIDAYPACKAGES_DISCOUNT_TEXT'); ?>
+                                                </span>
+                                                <div class="price-container">
+                                                    <?php if (!empty($item->price_per_person)): ?>
+                                                        <span class="actual-price" itemprop="price">
+                                                            ₹<?php echo number_format((float)$item->price_per_person, 0, '.', ','); ?>
+                                                        </span>
+                                                        <span class="per-person" itemprop="priceCurrency" content="INR">
+                                                            /<?php echo Text::_('COM_HOLIDAYPACKAGES_PER_PERSON'); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                                 <?php if (!empty($item->price_per_person)): ?>
-                                                    <span class="actual-price">₹<?php echo number_format((float)$item->price_per_person, 0, '.', ','); ?></span>
-                                                    <span class="per-person">/Person</span>
+                                                    <span class="total-price-text">
+                                                        <?php echo Text::sprintf('COM_HOLIDAYPACKAGES_TOTAL_PRICE', number_format((float)$item->price_per_person * 2, 0, '.', ',')); ?>
+                                                    </span>
                                                 <?php endif; ?>
                                             </div>
-                                            <?php if (!empty($item->price_per_person)): ?>
-                                                <span class="total-price-text">Total Price ₹<?php echo number_format((float)$item->price_per_person * 2, 0, '.', ','); ?></span>
-                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        <?php
-                        }
-                        ?>
-                    <?php endforeach; ?>
+                            <?php
+                            }
+                            ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <!-- Customize Popup -->
+        <div class="popup-overlay" id="customize-popup" style="display: none;" role="dialog" aria-labelledby="popup-title" aria-hidden="true">
+            <div class="popup-content" id="form-popup">
+                <button class="close-button" onclick="document.getElementById('customize-popup').style.display='none'" aria-label="<?php echo Text::_('COM_HOLIDAYPACKAGES_CLOSE'); ?>">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="popup-header">
+                    <div class="header-icon">
+                        <i class="fas fa-envelope-open-text fa-2x"></i>
+                    </div>
+                    <div class="header-text">
+                        <h3 id="popup-title"><?php echo Text::_('COM_HOLIDAYPACKAGES_GET_QUOTE'); ?></h3>
+                        <p><?php echo Text::_('COM_HOLIDAYPACKAGES_GET_QUOTE_MESSAGE'); ?></p>
+                    </div>
                 </div>
-            <?php endif; ?>
+                <div class="popup-body">
+                    {convertforms 2}
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="popup-overlay" id="customize-popup" style="display: none;">
-        <div class="popup-content" id="form-popup">
-<button class="close-button" onclick="document.getElementById('customize-popup').style.display='none'">
-    <i class="fas fa-times"></i>
-</button>     
-   <div class="popup-header">
-    <div class="header-icon">
-        <i class="fas fa-envelope-open-text fa-2x"></i> <!-- Added fa-2x for larger size -->
-    </div>
-    <div class="header-text">
-        <h3>Get a quote</h3>
-        <p>Please share your details below and our holiday expert will get in touch with you.</p>
-    </div>
-</div>
-            {convertforms 2}
-        </div>
-    </div>
-    <!-- Customize Button -->
-   <button type="button" class="customize-btn" id="customize-btn">
-            <span class="icon"><i class="fas fa-plane"></i></span> Customise my trip
+
+        <!-- Customize Button -->
+        <button type="button" class="customize-btn" id="customize-btn" aria-label="<?php echo Text::_('COM_HOLIDAYPACKAGES_CUSTOMIZE_TRIP'); ?>">
+            <span class="icon"><i class="fas fa-plane"></i></span>
+            <?php echo Text::_('COM_HOLIDAYPACKAGES_CUSTOMIZE_TRIP'); ?>
         </button>
-</div>
+    </div>
+</div> <!-- End container -->
 
 <script>
     window.packageSettings = {
@@ -736,30 +854,46 @@ $fullImageUrl = $imagePath ? Uri::root() . ltrim($imagePath, '/') : '';
             }
         });
 
-        document.getElementById('customize-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
+        // Handle customize form submission (if form exists)
+        const customizeForm = document.getElementById('customize-form');
+        if (customizeForm) {
+            customizeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
 
-            fetch('<?php echo Route::_('index.php?option=com_holidaypackages&task=saveCustomRequest'); ?>', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Request submitted successfully!');
-                    popupOverlay.style.display = 'none';
-                    this.reset();
-                } else {
-                    alert('Error submitting request.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                fetch('<?php echo Route::_('index.php?option=com_holidaypackages&task=saveCustomRequest'); ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('<?php echo Text::_('COM_HOLIDAYPACKAGES_REQUEST_SUBMITTED'); ?>');
+                        popupOverlay.style.display = 'none';
+                        popupOverlay.setAttribute('aria-hidden', 'true');
+                        this.reset();
+                    } else {
+                        alert('<?php echo Text::_('COM_HOLIDAYPACKAGES_ERROR_SUBMITTING'); ?>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('<?php echo Text::_('COM_HOLIDAYPACKAGES_ERROR_OCCURRED'); ?>');
+                });
             });
+        }
+
+        // Close popup with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && popupOverlay.style.display === 'block') {
+                popupOverlay.style.display = 'none';
+                popupOverlay.setAttribute('aria-hidden', 'true');
+            }
         });
     });
 </script>
-<script src="<?php echo Uri::root(); ?>media/com_holidaypackages/js/packages.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="<?php echo Uri::root(); ?>components/com_holidaypackages/js/packages.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
