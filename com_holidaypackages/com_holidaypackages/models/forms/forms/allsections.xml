@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="all_sections">
+
+        <!-- Section Type Dropdown -->
+        <field
+            name="section_type"
+            type="list"
+            label="Section Type"
+            required="true"
+        >
+            <option value="">-- Select Section --</option>
+            <option value="Airport Pickup and Drop">Airport Pickup and Drop</option>
+            <option value="Airport Transfers">Airport Transfers</option>
+            <option value="Round Trip Flights">Round Trip Flights</option>
+            <option value="Intercity Car Transfers">Intercity Car Transfers</option>
+            <option value="Selected Meals">Selected Meals</option>
+            <option value="resort">Resort</option>
+            <option value="Star Hotels">Star Hotels</option>
+            <option value="Star Hotels and Houseboat">Star Hotels and Houseboat</option>
+            <option value="sightseeing">Sightseeing</option>
+            <option value="Activities">Activities</option>
+            <option value="others">Others</option>
+        </field>
+
+        <!-- ✅ Common Fields shown for all section_type values except empty -->
+        <field name="heading" type="text" label="Heading" showon="section_type!: " />
+        <field name="place_name" type="text" label="Place Name" showon="section_type!: " />
+        <field name="duration" type="text" label="Duration" showon="section_type!: " />
+        <field name="place_covered" type="text" label="Place Covered" showon="section_type!: " />
+        <field name="description" type="textarea" label="Description" rows="3" showon="section_type!: " />
+
+        <!-- Multiple Upload Images (Subform) -->
+        <field
+            name="multi_images"
+            type="subform"
+            label="Upload Images"
+            formsource="administrator/components/com_holidaypackages/models/forms/forms/multi_images.xml"
+            multiple="true"
+            buttons="add,remove"
+            layout="joomla.form.field.subform.repeatable"
+        />
+
+        <!-- Ordering -->
+        <field name="ordering" type="hidden" />
+
+    </fields>
+</form>

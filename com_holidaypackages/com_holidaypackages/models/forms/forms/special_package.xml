@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="special_package">
+        <fieldset name="item">
+            <field
+                name="detail"
+                type="list"
+                label="Special Package Type"
+                required="true"
+                description="Select a type of special package">
+                <option value="">Select Type</option>
+                <option value="latest">Latest</option>
+                <option value="new">New</option>
+                <option value="honeymoon">Honeymoon</option>
+                <option value="adventure">Adventure</option>
+                <option value="family">Family</option>
+                <option value="group">Group</option>
+            </field>
+        </fieldset>
+    </fields>
+</form>

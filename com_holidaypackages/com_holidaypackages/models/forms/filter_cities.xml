@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <!-- Filter Fields -->
+    <fields name="filter">
+
+        <!-- Search Filter -->
+        <field
+            name="search"
+            type="text"
+            label="JSEARCH_FILTER"
+            description="JSEARCH_FILTER_DESC"
+            hint="JSEARCH_FILTER"
+            class="js-stools-search-string"
+        />
+
+        <!-- Published Status Filter -->
+        <field
+            name="published"
+            type="status"
+            label="JSTATUS"
+            description="JFIELD_PUBLISHED_DESC"
+            class="form-select"
+            onchange="this.form.submit();"
+        >
+            <option value="">JOPTION_SELECT_PUBLISHED</option>
+        </field>
+
+    
+
+    </fields>
+
+    <!-- List Fields -->
+    <fields name="list">
+
+        <!-- Sorting Field -->
+        <field
+            name="fullordering"
+            type="list"
+            label="JGLOBAL_SORT_BY"
+            description="JGLOBAL_SORT_BY_DESC"
+            default="c.id ASC"
+            class="form-select"
+            onchange="this.form.submit();"
+        >
+            <option value="c.id ASC">JGRID_HEADING_ID_ASC</option>
+            <option value="c.id DESC">JGRID_HEADING_ID_DESC</option>
+            <option value="c.name ASC">COM_HOLIDAYPACKAGES_CITY_NAME_ASC</option>
+            <option value="c.name DESC">COM_HOLIDAYPACKAGES_CITY_NAME_DESC</option>
+            <option value="c.published ASC">JSTATUS_ASC</option>
+            <option value="c.published DESC">JSTATUS_DESC</option>
+        </field>
+
+        <!-- Limit (Items Per Page) -->
+        <field
+            name="limit"
+            type="limitbox"
+            label="JGLOBAL_LIST_LIMIT"
+            description="JGLOBAL_LIST_LIMIT_DESC"
+            default="20"
+            class="form-select"
+            onchange="this.form.submit();"
+        />
+    </fields>
+</form>

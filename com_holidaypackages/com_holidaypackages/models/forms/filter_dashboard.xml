@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="filter">
+        <!-- Search Filter -->
+        <field
+            name="search"
+            type="text"
+            label="JSEARCH_FILTER"
+            description="JSEARCH_FILTER_DESC"
+            hint="JSEARCH_FILTER"
+            class="js-stools-search-string"
+        />
+
+        <!-- Published Status Filter -->
+        <field
+            name="published"
+            type="status"
+            label="JSTATUS"
+            description="JFIELD_PUBLISHED_DESC"
+            class="form-select"
+            onchange="this.form.submit();"
+        >
+            <option value="">JOPTION_SELECT_PUBLISHED</option>
+            <!-- <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+            <option value="2">JARCHIVED</option>
+            <option value="-2">JTRASHED</option>
+            <option value="*">JALL</option> -->
+        </field>
+
+        <!-- Category Filter -->
+        <field
+            name="category"
+            type="customcategory"
+            label="COM_HOLIDAYPACKAGES_FILTER_CATEGORY"
+            extension="com_holidaypackages"
+            class="form-select"
+            onchange="this.form.submit();"
+        >
+            <option value="">COM_HOLIDAYPACKAGES_SELECT_CATEGORY</option>
+        </field>
+    </fields>
+
+    <fields name="list">
+        <field
+            name="fullordering"
+            type="list"
+            label="JGLOBAL_SORT_BY"
+            description="JGLOBAL_SORT_BY_DESC"
+            default="d.id ASC"
+            class="form-select"
+            onchange="this.form.submit();"
+        >
+            <option value="">JGLOBAL_SORT_BY</option>
+            <option value="d.id ASC">JGRID_HEADING_ID_ASC</option>
+            <option value="d.id DESC">JGRID_HEADING_ID_DESC</option>
+            <option value="d.title ASC">JGLOBAL_TITLE_ASC</option>
+            <option value="d.title DESC">JGLOBAL_TITLE_DESC</option>
+            <option value="d.category ASC">COM_HOLIDAYPACKAGES_FIELD_CATEGORY_LABEL_ASC</option>
+            <option value="d.category DESC">COM_HOLIDAYPACKAGES_FIELD_CATEGORY_LABEL_DESC</option>
+        </field>
+
+        <field
+            name="limit"
+            type="limitbox"
+            label="JGLOBAL_LIST_LIMIT"
+            description="JGLOBAL_LIST_LIMIT_DESC"
+            default="20"
+            class="form-select"
+            onchange="this.form.submit();"
+        />
+    </fields>
+</form>

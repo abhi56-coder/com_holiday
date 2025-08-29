@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="details">
+        <field name="id" type="hidden" />
+
+        <field name="first_name" type="text" label="JGLOBAL_FIRST_NAME" size="40" class="inputbox" required="true" />
+        <field name="last_name" type="text" label="JGLOBAL_LAST_NAME" size="40" class="inputbox" required="true" />
+        <field name="phone" type="text" label="JGLOBAL_PHONE" size="20" class="inputbox" required="true" />
+        <field name="email" type="email" label="JGLOBAL_EMAIL" size="40" class="inputbox" required="true" />
+        <field name="street_address_1" type="text" label="JGLOBAL_STREET_ADDRESS_1" size="40" class="inputbox" />
+        <field name="street_address_2" type="text" label="JGLOBAL_STREET_ADDRESS_2" size="40" class="inputbox" />
+        <field name="city" type="text" label="JGLOBAL_CITY" size="40" class="inputbox" />
+        <field name="state" type="text" label="JGLOBAL_STATE" size="40" class="inputbox" />
+        <field name="postal_code" type="text" label="JGLOBAL_POSTAL_CODE" size="20" class="inputbox" />
+        <field name="destination" type="text" label="JGLOBAL_DESTINATION" size="40" class="inputbox" required="true" />
+        <field name="budget" type="text" label="JGLOBAL_BUDGET" size="20" class="inputbox" />
+        <field name="travelers" type="number" label="JGLOBAL_TRAVELERS" size="10" class="inputbox" default="1" />
+        <field name="departure_city" type="text" label="JGLOBAL_DEPARTURE_CITY" size="40" class="inputbox" />
+        <field name="start_date" type="calendar" label="JGLOBAL_START_DATE" format="%Y-%m-%d" required="true" />
+        <field name="end_date" type="calendar" label="JGLOBAL_END_DATE" format="%Y-%m-%d" required="true" />
+        <field name="insurance" type="radio" label="JGLOBAL_INSURANCE" class="btn-group btn-group-yesno" default="0">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="created" type="hidden" />
+        <field name="published" type="radio" label="JSTATUS" class="btn-group btn-group-yesno" default="1">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+    </fieldset>
+</form>
